@@ -7,7 +7,11 @@
 
 
 <div class="form-group">
-    <button class="btn btn-primary" type="button" id="btnUpdate">Update All Rows</button>
+    <button class="btn btn-primary" type="button" id="btnSelectAll">Select All Rows</button>
+</div>
+
+<div class="form-group">
+    <button class="btn btn-primary" type="button" id="btnSelectChanged">Select Updated Rows</button>
 </div>
 
 <table class="table table-striped" id="tblEmployees">
@@ -24,7 +28,7 @@
 <div id="updated-data"></div>
 
 @section Scripts{
-    <script>
+    <script>        
         $(document).ready(function () {
 
             $.ajax({                
@@ -50,20 +54,17 @@
                 );
             });
 
-            $('#btnUpdate').on('click', function (e) {
-                e.preventDefault();               
-                              
-                var employees = JSON.stringify(storeTblValues());
-                
-                console.log(employees);
+            $('#btnSelectAll').on('click', function (e) {
+                e.preventDefault();                               
+                var employees = JSON.stringify(selectAllRows());
+                                
                 $.ajax({
                     contentType: 'application/json; charset=utf-8',
                     url: "/Employee/Update",
                     type: "POST",                    
                     data: employees,
                     dataType: 'json',
-                    success: function (data) {
-                        //alert("Success");                        
+                    success: function (data) {                        
                         var output = JSON.stringify(data.employees)
                         $('#updated-data').text(output);
                                                 
@@ -73,9 +74,29 @@
                     }
                 });
             });
+            $('#btnSelectChanged').on('click', function (e) {
+                e.preventDefault();
+                
+                var employees = JSON.stringify(selectChangedRows());
+                
+                $.ajax({
+                    contentType: 'application/json; charset=utf-8',
+                    url: "/Employee/Update",
+                    type: "POST",
+                    data: employees,
+                    dataType: 'json',
+                    success: function (data) {                        
+                        var output = JSON.stringify(data.employees)
+                        $('#updated-data').text(output);
+                    },
+                    error: function (e) {
+                        console.log(e);
+                    }
+                });
+            });
         });
 
-        function storeTblValues() {
+        function selectAllRows() {
             var TableData = new Array();
 
             $('#tblEmployees tr').each(function (row, tr) {
@@ -83,11 +104,25 @@
                     "Id": $(tr).find('td:eq(0)').text()
                     , "Name": $(tr).find('td:eq(1)').text()                   
                     , "Title": $(tr).find('td:eq(2)').text()
-                }
+                }                
             });
             TableData.shift();  // first row will be empty - so remove
             return TableData;
         }
+
+        function selectChangedRows() {
+            var TableData = new Array();
+
+            $('#tblEmployees tr.edited-row').each(function (row, tr) {
+                TableData[row] = {
+                    "Id": $(tr).find('td:eq(0)').text()
+                    , "Name": $(tr).find('td:eq(1)').text()
+                    , "Title": $(tr).find('td:eq(2)').text()
+                }                
+            });            
+            return TableData;
+        }
+
 
         // -script below copied from https://github.com/mindmup/editable-table/blob/master/mindmup-editabletable.js and edited little bit // this should be on a separate file
 
@@ -129,7 +164,7 @@
                             }
                         }
                     },
-                    setActiveText = function () {
+                    setActiveText = function () {                        
                         var text = editor.val(),
                             evt = $.Event('change'),
                             originalContent;
@@ -138,9 +173,11 @@
                         }
                         originalContent = active.html();
                         active.text(text).trigger(evt, text);
-                        if (evt.result === false) {
+                        if (evt.result === false) {                            
                             active.html(originalContent);
                         }
+                        //add class to the closest tr of td when it is changed.                        
+                        active.closest('tr').addClass('edited-row');
                     },
                     movement = function (element, keycode) {
                         if (keycode === ARROW_RIGHT) {
