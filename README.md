@@ -1,5 +1,5 @@
 # BootstrapEditableTable
-This project demonstrates how to make a data table column editable and submit all rows to the server for update.
+This project demonstrates how to make a data table column editable and submit all/updated rows to the server for update.
 
 It uses the following: 
 
